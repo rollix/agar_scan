@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# TODO: Remove outer contours (arcLength)
+# TODO: Interactive GUI (crop, adjust threshold)
+
 import os
 import numpy as np
 import cv2
@@ -40,12 +43,8 @@ def get_number_of_cells(image_path, image_name):
 
     print(f"{image_name} : {len(contours_filtered)}")
 
-    # Get largest convex hull (circle shape of container)
-    #largest_convex_hull = get_largest_convex_hull(contours)
-
     image_color = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
     output = cv2.drawContours(image_color, contours_filtered, -1, GREEN, 3)
-    #output = cv2.drawContours(output, largest_convex_hull, -1, RED, 3)
     
     cv2.imwrite(f"{output_folder}{image_name.split('.')[0]}_out.jpg", output)
 
