@@ -24,11 +24,12 @@ RED = (0,0,255)
 def get_dish(image):
     # Find largest circle with a Hough transform
     mask = np.zeros((image.shape[0], image.shape[1]), dtype=np.uint8)
-    circles = cv2.HoughCircles(image, cv2.HOUGH_GRADIENT, 1, image.shape[0]/100)
+    image_blur = cv2.medianBlur(image, 5)
+    circles = cv2.HoughCircles(image_blur, cv2.HOUGH_GRADIENT, 1, image.shape[0]/100)
+    if circles is None:
+        return cv2.bitwise_not(mask), None 
     circles = np.uint16(np.around(circles))
    
-    if len(circles[0,:]) == 0:
-        return mask
     c = circles[0,:][0]
     cv2.circle(mask, (c[0], c[1]), c[2], 255, -1)
     return mask, c
@@ -56,10 +57,13 @@ def find_cells(image_path, image_name):
     image_dish = cv2.bitwise_and(image, image, mask=dish_mask)
 
     contours = get_contours(image_dish)
-    
-    print(f"{image_name} : {len(contours)}")
+    # Every cell has an outer and inner contour
+    n_contours = int(len(contours) / 2)
 
-    out_image = cv2.circle(out_image, (dish_circle[0], dish_circle[1]), dish_circle[2], RED, 4)
+    print(f"{image_name} : {n_contours}")
+
+    if dish_circle is not None:
+        out_image = cv2.circle(out_image, (dish_circle[0], dish_circle[1]), dish_circle[2], RED, 4)
     out_image = cv2.drawContours(out_image, contours, -1, GREEN, 1)
     
     output_path = f"{output_folder}{image_name.split('.')[0]}_out.jpg"
