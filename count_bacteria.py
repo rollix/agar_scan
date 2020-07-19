@@ -10,6 +10,7 @@ import cv2
 
 input_folder = "input_images/"
 output_folder = "output_images/"
+DIRECTORIES = [input_folder, output_folder]
 
 area_min = 2
 area_max = 2000
@@ -65,9 +66,13 @@ def find_cells(image_path, image_name):
     cv2.imwrite(output_path, out_image)
 
 if __name__=="__main__":
-   image_list = os.listdir(input_folder) 
-   image_list = [x for x in image_list if not (x.startswith('.'))]
+    for directory in DIRECTORIES:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
 
-   for image_name in image_list:
-       image_path = input_folder + image_name
-       find_cells(image_path, image_name)
+    image_list = os.listdir(input_folder) 
+    image_list = [x for x in image_list if not (x.startswith('.'))]
+
+    for image_name in image_list:
+        image_path = input_folder + image_name
+        find_cells(image_path, image_name)
