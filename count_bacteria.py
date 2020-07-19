@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
-# TODO: Remove outer contours on dish (arcLength)
 # TODO: Interactive GUI (crop, adjust threshold, area bounds)
 # TODO: Red color filter?
+# TODO: Relate arcLength and contourArea to find actual circular shapes
+# TODO: Identify duplictes with cv2.moments
 
 import os
 import numpy as np
@@ -12,15 +13,15 @@ input_folder = "input_images/"
 output_folder = "output_images/"
 DIRECTORIES = [input_folder, output_folder]
 
-area_min = 2
-area_max = 2000
-perimeter_max = 100
-dish_interior = 0.98
-
-CANNY_THRESHOLD = 170
-
 GREEN = (0,255,0)
 RED = (0,0,255)
+
+# Parameters to optimize
+area_min = 2
+area_max = 2000
+perimeter_max = 500
+dish_interior = 0.98
+CANNY_THRESHOLD = 170
 
 
 def get_dish(image):
