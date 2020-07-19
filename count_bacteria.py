@@ -14,6 +14,8 @@ DIRECTORIES = [input_folder, output_folder]
 
 area_min = 2
 area_max = 2000
+perimeter_max = 100
+dish_interior = 0.98
 
 CANNY_THRESHOLD = 170
 
@@ -31,8 +33,16 @@ def get_dish(image):
     circles = np.uint16(np.around(circles))
    
     c = circles[0,:][0]
+    # Slightly reduce dish radius to cut out the rim
+    c[2] *= dish_interior
     cv2.circle(mask, (c[0], c[1]), c[2], 255, -1)
     return mask, c
+
+def area_in_range(contour):
+    return area_min < cv2.contourArea(contour) < area_max
+
+def perimeter_in_range(contour):
+    return cv2.arcLength(contour, False) < perimeter_max
 
 def get_contours(image):
     # Detect edges
@@ -42,7 +52,7 @@ def get_contours(image):
     
     contours_filtered = []
     for contour in contours:
-        if area_min < cv2.contourArea(contour) < area_max:
+        if area_in_range(contour) and perimeter_in_range(contour):
             contours_filtered.append(contour)
     return contours_filtered
 
