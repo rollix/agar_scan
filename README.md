@@ -1,5 +1,5 @@
-# count_bacteria
-Count number of white dots in a bacteria culture
+# agar_scan 
+Count number of white dots on an agar_plate
 
 ## Install dependencies
 ```
@@ -9,5 +9,5 @@ pip install opencv-python
 
 ## Run the analyzer
 ```
-./count_bacteria
+python agar_scan.py
 ```
