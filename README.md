@@ -1,5 +1,5 @@
 # agar_scan 
-Count number of white dots on an agar_plate
+Count number of white dots on an agar plate
 
 ## Install dependencies
 ```
