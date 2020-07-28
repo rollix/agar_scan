@@ -2,8 +2,10 @@
 
 # TODO: Interactive GUI (crop, adjust threshold, area bounds)
 # TODO: Red color filter?
+# TODO: Use contour hierarchy instead of dividing by 2
 # TODO: Relate arcLength and contourArea to find actual circular shapes
 # TODO: Identify duplictes with cv2.moments
+# TODO: Color invariance
 
 import os
 import numpy as np
@@ -20,24 +22,53 @@ RED = (0,0,255)
 area_min = 2
 area_max = 2000
 perimeter_max = 500
-dish_interior = 0.98
+dish_interior = 0.95
 CANNY_THRESHOLD = 170
 
+
+def downsample(image, k_size, n_iter):
+    for i in range(n_iter):
+        image = cv2.medianBlur(image, k_size)
+    return image
 
 def get_dish(image):
     # Find largest circle with a Hough transform
     mask = np.zeros((image.shape[0], image.shape[1]), dtype=np.uint8)
-    image_blur = cv2.medianBlur(image, 5)
+    image_blur = downsample(image, 5, 1)
     circles = cv2.HoughCircles(image_blur, cv2.HOUGH_GRADIENT, 1, image.shape[0]/100)
     if circles is None:
         return cv2.bitwise_not(mask), None 
     circles = np.uint16(np.around(circles))
    
     c = circles[0,:][0]
-    # Slightly reduce dish radius to cut out the rim
-    c[2] *= dish_interior
+
+    # Get rectangle inscribing the dish
+    m = (c[0], c[1])
+    r = int(c[2]*dish_interior)
+    top_left = (c[0] - r, c[1] - r)
+    bottom_right = (c[0] + r, c[1] + r)
+    cv2.rectangle(mask, top_left, bottom_right, 255, -1)
+    image_dish = cv2.bitwise_and(image, image, mask=mask)
+    
+    cv2.imwrite("dish.jpg",image_dish)
+    return image_dish
+
+def get_dish_interior(image):
+    image_dish = get_dish(image)
+
+    # Find largest circle with a Hough transform
+    mask = np.zeros((image_dish.shape[0], image_dish.shape[1]), dtype=np.uint8)
+    image_blur = downsample(image_dish, 5, 1)
+    circles = cv2.HoughCircles(image_blur, cv2.HOUGH_GRADIENT, 1, image_dish.shape[0]/100)
+    if circles is None:
+        return cv2.bitwise_not(mask), None 
+    circles = np.uint16(np.around(circles))
+   
+    c = circles[0,:][0]
     cv2.circle(mask, (c[0], c[1]), c[2], 255, -1)
-    return mask, c
+    
+    image_interior = cv2.bitwise_and(image_dish, image_dish, mask=mask)
+    return image_interior, c
 
 def area_in_range(contour):
     return area_min < cv2.contourArea(contour) < area_max
@@ -49,10 +80,10 @@ def get_contours(image):
     # Detect edges
     canny_edges = cv2.Canny(image, CANNY_THRESHOLD, CANNY_THRESHOLD * 2)
     # Find contours
-    contours = cv2.findContours(canny_edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)[-2]
+    contours, hierarchy = cv2.findContours(canny_edges, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_SIMPLE)
     
     contours_filtered = []
-    for contour in contours:
+    for n, contour in enumerate(contours):
         if area_in_range(contour) and perimeter_in_range(contour):
             contours_filtered.append(contour)
     return contours_filtered
@@ -64,8 +95,8 @@ def find_cells(image_path, image_name):
     out_image = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
 
     # Use only the dish region, if found
-    dish_mask, dish_circle = get_dish(image)
-    image_dish = cv2.bitwise_and(image, image, mask=dish_mask)
+    image_dish, dish_circle = get_dish_interior(image)
+    cv2.imwrite("dish_interior.jpg", image_dish)
 
     contours = get_contours(image_dish)
     # Every cell has an outer and inner contour
