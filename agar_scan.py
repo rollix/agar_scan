@@ -50,7 +50,6 @@ def get_dish(image):
     cv2.rectangle(mask, top_left, bottom_right, 255, -1)
     image_dish = cv2.bitwise_and(image, image, mask=mask)
     
-    cv2.imwrite("dish.jpg",image_dish)
     return image_dish
 
 def get_dish_interior(image):
@@ -96,7 +95,6 @@ def find_cells(image_path, image_name):
 
     # Use only the dish region, if found
     image_dish, dish_circle = get_dish_interior(image)
-    cv2.imwrite("dish_interior.jpg", image_dish)
 
     contours = get_contours(image_dish)
     # Every cell has an outer and inner contour
